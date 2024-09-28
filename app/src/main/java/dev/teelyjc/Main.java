@@ -11,6 +11,7 @@ import javax.media.j3d.BoundingSphere;
 import javax.media.j3d.BranchGroup;
 import javax.media.j3d.Canvas3D;
 import javax.media.j3d.ColoringAttributes;
+import javax.media.j3d.PolygonAttributes;
 import javax.media.j3d.Transform3D;
 import javax.media.j3d.TransformGroup;
 import javax.media.j3d.TransparencyAttributes;
@@ -50,8 +51,8 @@ public class Main extends JFrame {
     this.simpleUniverse = new SimpleUniverse(c);
     this.simpleUniverse.getViewingPlatform().setNominalViewingTransform();
     this.simpleUniverse.getViewer().getView().setMinimumFrameCycleTime(5);
-    this.simpleUniverse.addBranchGraph(this.createSceneGraph());
 
+    this.simpleUniverse.addBranchGraph(this.createSceneGraph());
     this.jPanel.add(c, BorderLayout.CENTER);
   }
 
@@ -71,7 +72,7 @@ public class Main extends JFrame {
     BranchGroup root = new BranchGroup();
 
     Transform3D transform3D = new Transform3D();
-    transform3D.rotX(0.25);
+    // transform3D.rotX(0.25);
 
     TransformGroup transformGroup = new TransformGroup(transform3D);
     transformGroup.setCapability(TransformGroup.ALLOW_TRANSFORM_READ);
@@ -83,25 +84,24 @@ public class Main extends JFrame {
     transformGroup.addChild(this.createMouseGroup());
     transformGroup.addChild(this.createKeyboardGroup());
 
-    root.addChild(transformGroup);
-
     BoundingSphere boundingSphere = new BoundingSphere(new Point3d(0, 0, 0), 1000);
 
     MouseRotate mouseRotate = new MouseRotate();
     mouseRotate.setTransformGroup(transformGroup);
     mouseRotate.setSchedulingBounds(boundingSphere);
-    transformGroup.addChild(mouseRotate);
+    root.addChild(mouseRotate);
 
     MouseTranslate mouseTranslate = new MouseTranslate();
     mouseTranslate.setTransformGroup(transformGroup);
     mouseTranslate.setSchedulingBounds(boundingSphere);
-    transformGroup.addChild(mouseTranslate);
+    root.addChild(mouseTranslate);
 
     MouseZoom mouseZoom = new MouseZoom();
     mouseZoom.setTransformGroup(transformGroup);
     mouseZoom.setSchedulingBounds(boundingSphere);
-    transformGroup.addChild(mouseZoom);
+    root.addChild(mouseZoom);
 
+    root.addChild(transformGroup);
     root.addChild(this.createBackground());
     root.compile();
 
@@ -115,7 +115,7 @@ public class Main extends JFrame {
     return new TransformGroup(transform3D);
   }
 
-  private Appearance createAppearance(Color3f color3f, Boolean transparency) {
+  private Appearance createAppearance(Color3f color3f, Boolean transparency, PolygonAttributes polygonAttributes) {
     Appearance appearance = new Appearance();
 
     appearance.setColoringAttributes(
@@ -124,6 +124,10 @@ public class Main extends JFrame {
     if (transparency) {
       appearance.setTransparencyAttributes(
           new TransparencyAttributes(TransparencyAttributes.BLENDED, 0.4f));
+    }
+
+    if (polygonAttributes != null) {
+      appearance.setPolygonAttributes(polygonAttributes);
     }
 
     return appearance;
@@ -145,15 +149,20 @@ public class Main extends JFrame {
         new VectorPrimitive(
             "Upper Table",
             new Vector3f(0, 0, 0),
-            new Box(0.5f, 0.025f, 0.25f, this.createAppearance(Colors.Brown, false))),
+            new Box(0.5f, 0.025f, 0.25f, this.createAppearance(Colors.Brown, false, null))),
         new VectorPrimitive(
             "Left Leg",
             new Vector3f(-0.45f, -0.22f, 0.0f),
-            new Box(0.0125f, 0.2f, 0.25f, this.createAppearance(Colors.Black, false))),
+            new Box(0.0125f, 0.2f, 0.25f, this.createAppearance(Colors.Black, false, null))),
         new VectorPrimitive(
             "Right Leg",
             new Vector3f(0.45f, -0.22f, 0.0f),
-            new Box(0.0125f, 0.2f, 0.25f, this.createAppearance(Colors.Black, false)))
+            new Box(0.0125f, 0.2f, 0.25f, this.createAppearance(Colors.Black, false, null))),
+        new VectorPrimitive(
+            "Upper Table Border",
+            new Vector3f(0, 0.05f, 0),
+            new Box(0.5f, 0.025f, 0.25f, this.createAppearance(Colors.Red, false,
+                new PolygonAttributes(PolygonAttributes.POLYGON_POINT, PolygonAttributes.CULL_NONE, 0)))),
     };
 
     for (VectorPrimitive tablePart : tableParts) {
@@ -175,55 +184,64 @@ public class Main extends JFrame {
         new VectorPrimitive(
             "PC Body",
             new Vector3f(0.42f, 0.12f, 0.0f),
-            new Box(0.065f, 0.1f, 0.12f, this.createAppearance(Colors.Black, false))),
+            new Box(0.065f, 0.1f, 0.12f, this.createAppearance(Colors.Black, false, null))),
+        new VectorPrimitive(
+            "Side PC Fan Border",
+            new Vector3f(0.35f, 0.08f, 0.0f),
+            new Box(0.0025f, 0.025f, 0.025f,
+                this.createAppearance(Colors.White,
+                    false,
+                    new PolygonAttributes(
+                        PolygonAttributes.POLYGON_LINE,
+                        PolygonAttributes.CULL_BACK, 0)))),
         new VectorPrimitive(
             "Top Front PC Border",
             new Vector3f(0.42f, 0.22f, 0.12f),
-            new Box(0.065f, 0.005f, 0.005f, this.createAppearance(Colors.White, true))),
+            new Box(0.065f, 0.005f, 0.005f, this.createAppearance(Colors.White, true, null))),
         new VectorPrimitive(
             "Top Back PC Border",
             new Vector3f(0.42f, 0.22f, -0.12f),
-            new Box(0.065f, 0.005f, 0.005f, this.createAppearance(Colors.White, true))),
+            new Box(0.065f, 0.005f, 0.005f, this.createAppearance(Colors.White, true, null))),
         new VectorPrimitive(
             "Bottom Front PC Border",
             new Vector3f(0.42f, 0.025f, 0.12f),
-            new Box(0.065f, 0.005f, 0.005f, this.createAppearance(Colors.White, true))),
+            new Box(0.065f, 0.005f, 0.005f, this.createAppearance(Colors.White, true, null))),
         new VectorPrimitive(
             "Bottom Back PC Border",
             new Vector3f(0.42f, 0.025f, -0.12f),
-            new Box(0.065f, 0.005f, 0.005f, this.createAppearance(Colors.White, true))),
+            new Box(0.065f, 0.005f, 0.005f, this.createAppearance(Colors.White, true, null))),
         new VectorPrimitive(
             "Top Left PC Border",
             new Vector3f(0.35f, 0.22f, 0),
-            new Box(0.005f, 0.005f, 0.12f, this.createAppearance(Colors.White, true))),
+            new Box(0.005f, 0.005f, 0.12f, this.createAppearance(Colors.White, true, null))),
         new VectorPrimitive(
             "Top Right PC Border",
             new Vector3f(0.49f, 0.22f, 0),
-            new Box(0.005f, 0.005f, 0.12f, this.createAppearance(Colors.White, true))),
+            new Box(0.005f, 0.005f, 0.12f, this.createAppearance(Colors.White, true, null))),
         new VectorPrimitive(
             "Bottom Left PC Border",
             new Vector3f(0.35f, 0.025f, 0),
-            new Box(0.005f, 0.005f, 0.12f, this.createAppearance(Colors.White, true))),
+            new Box(0.005f, 0.005f, 0.12f, this.createAppearance(Colors.White, true, null))),
         new VectorPrimitive(
             "Bottom Right PC Border",
             new Vector3f(0.49f, 0.025f, 0),
-            new Box(0.005f, 0.005f, 0.12f, this.createAppearance(Colors.White, true))),
+            new Box(0.005f, 0.005f, 0.12f, this.createAppearance(Colors.White, true, null))),
         new VectorPrimitive(
             "Front Left PC Border",
             new Vector3f(0.35f, 0.1f, 0.12f),
-            new Box(0.005f, 0.12f, 0.005f, this.createAppearance(Colors.White, true))),
+            new Box(0.005f, 0.12f, 0.005f, this.createAppearance(Colors.White, true, null))),
         new VectorPrimitive(
             "Front Right PC Border",
             new Vector3f(0.49f, 0.1f, 0.12f),
-            new Box(0.005f, 0.12f, 0.005f, this.createAppearance(Colors.White, true))),
+            new Box(0.005f, 0.12f, 0.005f, this.createAppearance(Colors.White, true, null))),
         new VectorPrimitive(
             "Back Left PC Border",
             new Vector3f(0.35f, 0.1f, -0.12f),
-            new Box(0.005f, 0.12f, 0.005f, this.createAppearance(Colors.White, true))),
+            new Box(0.005f, 0.12f, 0.005f, this.createAppearance(Colors.White, true, null))),
         new VectorPrimitive(
             "Back Right PC Border",
             new Vector3f(0.49f, 0.1f, -0.12f),
-            new Box(0.005f, 0.12f, 0.005f, this.createAppearance(Colors.White, true)))
+            new Box(0.005f, 0.12f, 0.005f, this.createAppearance(Colors.White, true, null)))
     };
 
     for (VectorPrimitive pcPart : pcParts) {
@@ -245,19 +263,19 @@ public class Main extends JFrame {
         new VectorPrimitive(
             "Monitor Base",
             new Vector3f(0.0f, 0.03f, -0.1f),
-            new Box(0.08f, 0.005f, 0.04f, this.createAppearance(Colors.Black, false))),
+            new Box(0.08f, 0.005f, 0.04f, this.createAppearance(Colors.Black, false, null))),
         new VectorPrimitive(
             "Monitor Connector",
             new Vector3f(0.0f, 0.08f, -0.1f),
-            new Box(0.02f, 0.06f, 0.01f, this.createAppearance(Colors.Black, false))),
+            new Box(0.02f, 0.06f, 0.01f, this.createAppearance(Colors.Black, false, null))),
         new VectorPrimitive(
             "Monitor Display",
             new Vector3f(0.0f, 0.15f, -0.08f),
-            new Box(0.25f, 0.1f, 0.01f, this.createAppearance(Colors.Black, false))),
+            new Box(0.25f, 0.1f, 0.01f, this.createAppearance(Colors.Black, false, null))),
         new VectorPrimitive(
             "Monitor White Screen",
             new Vector3f(0.0f, 0.15f, -0.07f),
-            new Box(0.24f, 0.09f, 0.001f, this.createAppearance(Colors.White, false)))
+            new Box(0.24f, 0.09f, 0.001f, this.createAppearance(Colors.White, false, null)))
     };
 
     for (VectorPrimitive monitorPart : monitorParts) {
@@ -279,11 +297,11 @@ public class Main extends JFrame {
         new VectorPrimitive(
             "Mouse Body",
             new Vector3f(0.25f, 0.03f, 0.1f),
-            new Box(0.02f, 0.015f, 0.03f, this.createAppearance(Colors.Black, false))),
+            new Box(0.02f, 0.015f, 0.03f, this.createAppearance(Colors.Black, false, null))),
         new VectorPrimitive(
             "Mouse Buttons",
             new Vector3f(0.25f, 0.045f, 0.08f),
-            new Box(0.015f, 0.0025f, 0.01f, this.createAppearance(Colors.White, false)))
+            new Box(0.015f, 0.0025f, 0.01f, this.createAppearance(Colors.White, false, null)))
         // Width, Height, ?
     };
 
@@ -306,11 +324,11 @@ public class Main extends JFrame {
         new VectorPrimitive(
             "Keyboard Frame",
             new Vector3f(0.0f, 0.03f, 0.1f),
-            new Box(0.1f, 0.005f, 0.05f, this.createAppearance(Colors.Black, false))),
+            new Box(0.1f, 0.005f, 0.05f, this.createAppearance(Colors.Black, false, null))),
         new VectorPrimitive(
             "Keyboard Buttons",
             new Vector3f(0.0f, 0.035f, 0.1f),
-            new Box(0.09f, 0.004f, 0.04f, this.createAppearance(Colors.White, false))),
+            new Box(0.09f, 0.004f, 0.04f, this.createAppearance(Colors.White, false, null))),
     };
 
     for (VectorPrimitive keyboardPart : keyboardParts) {
